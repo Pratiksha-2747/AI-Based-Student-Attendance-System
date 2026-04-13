@@ -131,6 +131,21 @@ def subjectChoose(text_to_speech):
                 filePath = os.path.join(path, fileName)
 
                 attendance = attendance.drop_duplicates(["Enrollment"], keep="first")
+                print("[DEBUG] Attendance rows count:", len(attendance))
+                print("[DEBUG] Attendance df:\n", attendance)
+
+                for _, row in attendance.iterrows():
+                    try:
+                        enr = int(row["Enrollment"])
+                        nm = str(row["Name"]).strip()
+                        if nm.startswith("['") and nm.endswith("']"):
+                            nm = nm[2:-2]
+
+                        print(f"[DEBUG] trying DB write: enr={enr}, nm={nm}, sub={Subject}")
+                        save_attendance(enr, nm, Subject, datetime.datetime.now())
+                        print(f"[DB WRITE] saved -> enrollment={enr}, name={nm}, subject={Subject}")
+                    except Exception as e:
+                        print(f"[DB WRITE ERROR] {e}")
                 print(attendance)
 
                 for _, row in attendance.iterrows():
