@@ -1,38 +1,73 @@
-import csv
 import os, cv2
 import numpy as np
-import pandas as pd
-import datetime
-import time
-from PIL import ImageTk, Image
+from PIL import Image
 
 
 # Train Image
-def TrainImage(haarcasecade_path, trainimage_path, trainimagelabel_path, message,text_to_speech):
+def TrainImage(haarcasecade_path, trainimage_path, trainimagelabel_path, message, text_to_speech):
     recognizer = cv2.face.LBPHFaceRecognizer_create()
-    detector = cv2.CascadeClassifier(haarcasecade_path)
-    faces, Id = getImagesAndLables(trainimage_path)
-    recognizer.train(faces, np.array(Id))
+
+    faces, ids = getImagesAndLables(trainimage_path)
+
+    if len(faces) == 0 or len(ids) == 0:
+        res = "No valid training images found. Please capture images first."
+        message.configure(text=res)
+        text_to_speech(res)
+        return
+
+    recognizer.train(faces, np.array(ids))
+
+    # Ensure label directory exists
+    label_dir = os.path.dirname(trainimagelabel_path)
+    os.makedirs(label_dir, exist_ok=True)
+
     recognizer.save(trainimagelabel_path)
-    res = "Image Trained successfully"  # +",".join(str(f) for f in Id)
+    res = "Image Trained Successfully"
     message.configure(text=res)
     text_to_speech(res)
 
 
 def getImagesAndLables(path):
-    # imagePath = [os.path.join(path, f) for d in os.listdir(path) for f in d]
-    newdir = [os.path.join(path, d) for d in os.listdir(path)]
-    imagePath = [
-        os.path.join(newdir[i], f)
-        for i in range(len(newdir))
-        for f in os.listdir(newdir[i])
-    ]
     faces = []
-    Ids = []
-    for imagePath in imagePath:
-        pilImage = Image.open(imagePath).convert("L")
-        imageNp = np.array(pilImage, "uint8")
-        Id = int(os.path.split(imagePath)[-1].split("_")[1])
-        faces.append(imageNp)
-        Ids.append(Id)
-    return faces, Ids
+    ids = []
+
+    if not os.path.exists(path):
+        return faces, ids
+
+    # Traverse all student folders
+    for student_dir in os.listdir(path):
+        student_dir_path = os.path.join(path, student_dir)
+        if not os.path.isdir(student_dir_path):
+            continue
+
+        for file_name in os.listdir(student_dir_path):
+            if not file_name.lower().endswith((".jpg", ".jpeg", ".png")):
+                continue
+
+            image_path = os.path.join(student_dir_path, file_name)
+
+            try:
+                pil_image = Image.open(image_path).convert("L")
+                image_np = np.array(pil_image, "uint8")
+
+                # Expected: <Name>_<Enrollment>_<Sample>.jpg
+                # Robust parse from right side
+                base_name = os.path.splitext(file_name)[0]
+                parts = base_name.rsplit("_", 2)
+                if len(parts) != 3:
+                    continue
+
+                enrollment_str = parts[1]
+                if not enrollment_str.isdigit():
+                    continue
+
+                student_id = int(enrollment_str)
+
+                faces.append(image_np)
+                ids.append(student_id)
+
+            except Exception:
+                # Skip corrupted/bad files
+                continue
+
+    return faces, ids
