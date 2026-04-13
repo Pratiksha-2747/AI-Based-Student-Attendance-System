@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   UserPlus, 
@@ -58,7 +59,7 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
+      <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
         <div className="absolute -top-40 -right-32 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-4000"></div>
@@ -71,14 +72,14 @@ export default function SignUpPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push("/")}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border-2 border-slate-300 hover:scale-105 transform duration-300 shadow-md hover:shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-all border-2 border-slate-300 hover:scale-105 transform duration-300 shadow-md hover:shadow-lg"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span className="font-medium">Back to Home</span>
               </button>
               
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg">
                   <UserPlus className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -90,7 +91,7 @@ export default function SignUpPage() {
 
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border-2 border-slate-300 hover:scale-105 transform duration-300 shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-all border-2 border-slate-300 hover:scale-105 transform duration-300 shadow-md hover:shadow-lg"
             >
               <Home className="w-5 h-5" />
               <span className="font-medium">Home</span>
@@ -102,10 +103,10 @@ export default function SignUpPage() {
       <main className="flex items-center justify-center p-4 sm:p-6 relative z-10">
         <div className="w-full max-w-md">
           {/* Sign Up Form */}
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border-2 border-slate-200 shadow-xl mt-8">
+          <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-xl mt-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* User Type Selection */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
                 <label className="block text-slate-700 text-sm font-semibold mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-purple-600" />
                   Sign up as:
@@ -114,7 +115,7 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, userType: "student" }))}
-                    className={`p-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
+                    className={`p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
                       formData.userType === "student" 
                         ? "bg-blue-50 border-blue-300 text-blue-700 shadow-lg" 
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
@@ -126,7 +127,7 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, userType: "teacher" }))}
-                    className={`p-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
+                    className={`p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
                       formData.userType === "teacher" 
                         ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-lg" 
                         : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
@@ -152,7 +153,7 @@ export default function SignUpPage() {
                     required
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full bg-white border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
+                    className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -171,7 +172,7 @@ export default function SignUpPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full bg-white border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
+                    className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -190,7 +191,7 @@ export default function SignUpPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full bg-white border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
+                    className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -199,7 +200,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg hover:shadow-xl ${
+                className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg hover:shadow-xl ${
                   formData.userType === 'teacher' 
                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' 
                     : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
@@ -221,7 +222,7 @@ export default function SignUpPage() {
 
             {/* Status Message */}
             {status && (
-              <div className={`mt-6 p-4 rounded-xl text-center border-2 transition-all duration-300 ${
+              <div className={`mt-6 p-4 rounded-2xl text-center border-2 transition-all duration-300 ${
                 status.includes("successful") 
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
                   : status.includes("Error") || status.includes("failed")
@@ -234,13 +235,13 @@ export default function SignUpPage() {
 
             {/* Sign In Link */}
             <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-              <button
-                onClick={() => router.push("/signin")}
+              <Link
+                href="/signin"
                 className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-800 transition-colors font-semibold hover:scale-105 transform duration-300"
               >
                 <LogIn className="w-4 h-4" />
                 Already have an account? Sign in
-              </button>
+              </Link>
             </div>
           </div>
 

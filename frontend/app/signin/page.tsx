@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   LogIn, 
@@ -91,7 +92,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
+      <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
         <div className="absolute -top-40 -right-32 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-2000"></div>
       </div>
@@ -100,7 +101,7 @@ export default function SignInPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
               <LogIn className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Welcome Back</h1>
@@ -109,10 +110,10 @@ export default function SignInPage() {
         </div>
 
         {/* Sign In Form */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border-2 border-slate-200 shadow-xl">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* User Type Selection */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
               <label className="block text-slate-700 text-sm font-semibold mb-3 flex items-center gap-2">
                 <User className="w-4 h-4 text-blue-600" />
                 Sign in as:
@@ -121,7 +122,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: "student" }))}
-                  className={`p-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
+                  className={`p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
                     formData.userType === "student" 
                       ? "bg-blue-50 border-blue-300 text-blue-700 shadow-lg" 
                       : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
@@ -133,7 +134,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, userType: "teacher" }))}
-                  className={`p-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
+                  className={`p-3 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold hover:scale-105 ${
                     formData.userType === "teacher" 
                       ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-lg" 
                       : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
@@ -159,7 +160,7 @@ export default function SignInPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full bg-white border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                  className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
                 />
               </div>
             </div>
@@ -178,7 +179,7 @@ export default function SignInPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full bg-white border-2 border-slate-200 rounded-xl pl-12 pr-12 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                  className="w-full bg-white border-2 border-slate-200 rounded-2xl pl-12 pr-12 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
                 />
                 <button
                   type="button"
@@ -194,7 +195,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg hover:shadow-xl ${
+              className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg hover:shadow-xl ${
                 formData.userType === 'teacher' 
                   ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' 
                   : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
@@ -216,7 +217,7 @@ export default function SignInPage() {
 
           {/* Status Message */}
           {status && (
-            <div className={`mt-6 p-4 rounded-xl text-center border-2 transition-all duration-300 ${
+            <div className={`mt-6 p-4 rounded-2xl text-center border-2 transition-all duration-300 ${
               status.includes("successful") 
                 ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
                 : status.includes("Error") || status.includes("Invalid") 
@@ -229,14 +230,13 @@ export default function SignInPage() {
 
           {/* Sign Up Link */}
           <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-            <button
-              type="button"
-              onClick={() => router.push("/signup")}
+            <Link
+              href="/signup"
               className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors font-semibold hover:scale-105 transform duration-300"
             >
               <UserPlus className="w-4 h-4" />
               Create new account
-            </button>
+            </Link>
           </div>
         </div>
 
