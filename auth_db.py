@@ -143,3 +143,24 @@ def get_attendance_summary(enrollment: int):
         "records": records,
         "subject_summary": subject_summary
     }
+
+def set_face_registered(email: str, value: bool = True):
+    users_col.update_one(
+        {"email": email.lower().strip()},
+        {"$set": {"face_registered": value, "updated_at": datetime.utcnow()}}
+    )
+
+students_col = db["students"]
+
+def upsert_student(enrollment: int, name: str, email: str, phone: str):
+    students_col.update_one(
+        {"enrollment": int(enrollment)},
+        {"$set": {
+            "enrollment": int(enrollment),
+            "name": name.strip(),
+            "email": email.strip().lower(),
+            "phone": phone.strip(),
+            "updated_at": datetime.utcnow()
+        }},
+        upsert=True
+    )

@@ -1,6 +1,9 @@
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+import takeImage
+import trainImage
+from auth_db import set_face_registered
 
 from auth_db import (
     create_user,
@@ -14,7 +17,34 @@ from otp_service import generate_otp, send_otp_email
 
 selected_image_path = None
 pending_email = None
+face_capture_done = False
+otp_sent = False
 
+def upsert_student_csv(enrollment: int, name: str):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    studentdetail_path = os.path.join(BASE_DIR, "StudentDetails", "studentdetails.csv")
+    os.makedirs(os.path.dirname(studentdetail_path), exist_ok=True)
+
+    import csv
+    rows = []
+    exists = False
+
+    if os.path.exists(studentdetail_path):
+        with open(studentdetail_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                if str(r.get("Enrollment", "")).strip() == str(enrollment):
+                    r["Name"] = str(name).strip()
+                    exists = True
+                rows.append(r)
+
+    if not exists:
+        rows.append({"Enrollment": str(enrollment), "Name": str(name).strip()})
+
+    with open(studentdetail_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["Enrollment", "Name"])
+        writer.writeheader()
+        writer.writerows(rows)
 
 def choose_image():
     global selected_image_path
@@ -26,9 +56,55 @@ def choose_image():
         selected_image_path = path
         img_label.config(text=os.path.basename(path))
 
+def capture_face_now():
+    global face_capture_done
+
+    name = name_entry.get().strip()
+    enrollment = enroll_entry.get().strip()
+
+    if not name or not enrollment:
+        messagebox.showerror("Error", "Enter Name and Enrollment first.")
+        return
+    if not enrollment.isdigit():
+        messagebox.showerror("Error", "Enrollment must be numeric.")
+        return
+
+    try:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        haarcasecade_path = os.path.join(BASE_DIR, "haarcascade_frontalface_default.xml")
+        trainimage_path = os.path.join(BASE_DIR, "TrainingImage")
+        trainimagelabel_path = os.path.join(BASE_DIR, "TrainingImageLabel", "Trainner.yml")
+
+        captured = takeImage.TakeImageMultiAngle(
+            enrollment=int(enrollment),
+            name=name,
+            haarcascade_path=haarcasecade_path,
+            trainimage_path=trainimage_path
+        )
+
+        if captured < 20:
+            face_capture_done = False
+            messagebox.showwarning("Warning", f"Only {captured} samples captured. Please retry.")
+            return
+
+        dummy_msg = type("obj", (), {"configure": lambda *args, **kwargs: None})()
+        trainImage.TrainImage(
+            haarcasecade_path,
+            trainimage_path,
+            trainimagelabel_path,
+            dummy_msg,
+            lambda x: None
+        )
+
+        face_capture_done = True
+        messagebox.showinfo("Success", "Face registration completed successfully.")
+
+    except Exception as e:
+        face_capture_done = False
+        messagebox.showerror("Error", f"Face capture failed: {e}")
 
 def signup():
-    global pending_email
+    global pending_email, otp_sent
     name = name_entry.get().strip()
     email = email_entry.get().strip().lower()
     phone = phone_entry.get().strip()
@@ -43,21 +119,30 @@ def signup():
         messagebox.showerror("Error", "Enrollment must be numeric.")
         return
 
-    try:
-        create_user(name, email, phone, password, selected_image_path, int(enrollment))
-    except Exception as e:
-        messagebox.showerror("Error", f"Signup failed: {e}")
+    # compulsory face capture check
+    if not face_capture_done:
+        messagebox.showerror("Error", "Face recognition is compulsory. Please click 'Face Recognition' first.")
         return
 
     try:
+        if not otp_sent:
+            # first time signup create user
+            create_user(name, email, phone, password, selected_image_path, int(enrollment))
+            upsert_student_csv(int(enrollment), name)   # ✅ HERE
+
         otp = generate_otp()
         set_otp(email, otp)
         send_otp_email(email, otp)
         pending_email = email
-        messagebox.showinfo("OTP Sent", f"OTP sent to {email}")
-    except Exception as e:
-        messagebox.showerror("Error", f"OTP send failed: {e}")
+        otp_sent = True
 
+        messagebox.showinfo("OTP Sent", f"OTP sent to {email}")
+
+        # change button text to resend
+        signup_otp_btn.config(text="Resend OTP", bg="orange", command=resend_otp)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"OTP flow failed: {e}")
 
 def verify_otp_ui():
     if not pending_email:
@@ -72,11 +157,17 @@ def verify_otp_ui():
         messagebox.showerror("Error", msg)
 
 def resend_otp():
-    global pending_email
+    global pending_email, otp_sent
     email = email_entry.get().strip().lower()
+
     if not email:
         messagebox.showerror("Error", "Enter email first.")
         return
+
+    if not otp_sent:
+        messagebox.showerror("Error", "Please click 'Sign Up + Send OTP' first.")
+        return
+
     try:
         otp = generate_otp()
         set_otp(email, otp)
@@ -216,7 +307,10 @@ tk.Button(root, text="Choose Profile Image", command=choose_image).pack(pady=6)
 img_label = tk.Label(root, text="No image selected", bg="#1c1c1c", fg="white")
 img_label.pack()
 
-tk.Button(root, text="Sign Up + Send OTP", command=signup, bg="green", fg="white").pack(pady=8)
+tk.Button(root, text="Face Recognition (Compulsory)", command=capture_face_now, bg="orange", fg="black").pack(pady=8)
+
+signup_otp_btn = tk.Button(root, text="Sign Up + Send OTP", command=signup, bg="green", fg="white")
+signup_otp_btn.pack(pady=8)
 
 otp_entry = tk.Entry(root, width=24)
 otp_entry.pack(pady=5)
