@@ -71,6 +71,21 @@ def verify_otp_ui():
     else:
         messagebox.showerror("Error", msg)
 
+def resend_otp():
+    global pending_email
+    email = email_entry.get().strip().lower()
+    if not email:
+        messagebox.showerror("Error", "Enter email first.")
+        return
+    try:
+        otp = generate_otp()
+        set_otp(email, otp)
+        send_otp_email(email, otp)
+        pending_email = email
+        messagebox.showinfo("OTP Sent", f"New OTP sent to {email}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Resend OTP failed: {e}")
+
 
 def open_dashboard(email):
     user = get_user_by_email(email)
@@ -87,7 +102,7 @@ def open_dashboard(email):
 
     dash = tk.Toplevel(root)
     dash.title("My Attendance Dashboard")
-    dash.geometry("920x560")
+    dash.geometry("980x700")
     dash.configure(bg="#f5f5f5")
 
     tk.Label(
@@ -101,14 +116,46 @@ def open_dashboard(email):
     tk.Label(dash, text=f"Attended Classes: {data['present']}", font=("Arial", 12), bg="#f5f5f5").pack()
     tk.Label(dash, text=f"Absent Lectures: {data['absent']}", font=("Arial", 12), bg="#f5f5f5").pack()
 
+    # -------- Subject-wise Summary --------
+    tk.Label(
+        dash,
+        text="Subject-wise Attendance",
+        font=("Arial", 12, "bold"),
+        bg="#f5f5f5"
+    ).pack(pady=(12, 4))
+
+    sub_cols = ("subject", "attended", "absent", "total")
+    sub_tree = ttk.Treeview(dash, columns=sub_cols, show="headings", height=6)
+
+    for c in sub_cols:
+        sub_tree.heading(c, text=c.capitalize())
+        sub_tree.column(c, width=220 if c == "subject" else 120)
+
+    sub_tree.pack(fill="x", padx=12, pady=6)
+
+    for s in data.get("subject_summary", []):
+        sub_tree.insert(
+            "",
+            "end",
+            values=(s["subject"], s["attended"], s["absent"], s["total"])
+        )
+
+    # -------- Detailed Attendance Records --------
+    tk.Label(
+        dash,
+        text="Detailed Attendance Records (Latest First)",
+        font=("Arial", 12, "bold"),
+        bg="#f5f5f5"
+    ).pack(pady=(10, 4))
+
     columns = ("subject", "date", "time", "status")
-    tree = ttk.Treeview(dash, columns=columns, show="headings", height=18)
+    tree = ttk.Treeview(dash, columns=columns, show="headings", height=12)
 
     for c in columns:
         tree.heading(c, text=c.capitalize())
-        tree.column(c, width=220 if c == "subject" else 160)
+        tree.column(c, width=240 if c == "subject" else 160)
 
-    tree.pack(fill="both", expand=True, padx=12, pady=12)
+    tree.pack(fill="both", expand=True, padx=12, pady=8)
 
     for r in data["records"]:  # sorted by date/time desc in auth_db.py
         tree.insert(
@@ -121,7 +168,6 @@ def open_dashboard(email):
                 r.get("status", "present")
             )
         )
-
 
 def login():
     email = login_email_entry.get().strip().lower()

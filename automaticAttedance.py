@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import *
+from db import save_attendance
 import os, cv2
 import shutil
 import csv
@@ -128,8 +129,24 @@ def subjectChoose(text_to_speech):
                     + ".csv"
                 )
                 filePath = os.path.join(path, fileName)
+
                 attendance = attendance.drop_duplicates(["Enrollment"], keep="first")
                 print(attendance)
+
+                for _, row in attendance.iterrows():
+                    try:
+                        enr = int(row["Enrollment"])
+                        nm = str(row["Name"]).strip()
+
+                        # if name is like "['Rohini']" from pandas array formatting, clean it
+                        if nm.startswith("['") and nm.endswith("']"):
+                            nm = nm[2:-2]
+
+                        save_attendance(enr, nm, Subject, datetime.now())
+                        print(f"[DB WRITE] saved -> enrollment={enr}, name={nm}, subject={Subject}")
+                    except Exception as e:
+                        print(f"[DB WRITE ERROR] row={row.to_dict()} error={e}")
+
                 attendance.to_csv(filePath, index=False)
 
                 m = "Attendance Filled Successfully of " + Subject

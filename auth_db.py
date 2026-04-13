@@ -7,8 +7,12 @@ import certifi
 
 load_dotenv()
 
+
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB = os.getenv("MONGO_DB", "attendance_system")
+
+print("DB:", MONGO_DB)
+print("URI startswith:", (MONGO_URI or "")[:25])
 
 client = MongoClient(
     MONGO_URI,
@@ -101,16 +105,35 @@ def get_user_by_email(email):
     return users_col.find_one({"email": email.lower()})
 
 def get_attendance_summary(enrollment: int):
+    e_int = int(enrollment)
+    e_str = str(enrollment)
+
+    # fetch all attendance rows for this student (int or str enrollment)
     records = list(
-        attendance_col.find({"enrollment": int(enrollment)}).sort(
-            [("date", -1), ("time", -1)]
-        )
+        attendance_col.find({
+            "$or": [{"enrollment": e_int}, {"enrollment": e_str}]
+        }).sort([("date", -1), ("time", -1)])
     )
 
+    # overall stats
     total = len(records)
     present = sum(1 for r in records if r.get("status", "present") == "present")
     absent = sum(1 for r in records if r.get("status") == "absent")
     percentage = (present / total * 100) if total > 0 else 0.0
+
+    # subject-wise count
+    subject_map = {}
+    for r in records:
+        sub = r.get("subject", "Unknown")
+        if sub not in subject_map:
+            subject_map[sub] = {"subject": sub, "attended": 0, "absent": 0, "total": 0}
+        subject_map[sub]["total"] += 1
+        if r.get("status", "present") == "present":
+            subject_map[sub]["attended"] += 1
+        else:
+            subject_map[sub]["absent"] += 1
+
+    subject_summary = sorted(subject_map.values(), key=lambda x: x["subject"].lower())
 
     return {
         "total": total,
@@ -118,4 +141,5 @@ def get_attendance_summary(enrollment: int):
         "absent": absent,
         "percentage": round(percentage, 2),
         "records": records,
+        "subject_summary": subject_summary
     }

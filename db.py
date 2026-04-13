@@ -9,6 +9,9 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB = os.getenv("MONGO_DB", "attendance_system")
 
+print("DB:", MONGO_DB)
+print("URI startswith:", (MONGO_URI or "")[:25])
+
 if not MONGO_URI:
     raise ValueError("MONGO_URI missing in .env")
 
@@ -60,13 +63,26 @@ def save_photo_meta(enrollment: int, name: str, photo_path: str):
 
 
 def save_attendance(enrollment: int, name: str, subject: str, dt: datetime):
+    enrollment = int(enrollment)
+    subject = subject.strip().upper()
     date_str = dt.strftime("%Y-%m-%d")
     time_str = dt.strftime("%H:%M:%S")
+
     attendance_col.update_one(
         {"enrollment": enrollment, "subject": subject, "date": date_str},
         {
-            "$set": {"name": name, "time": time_str, "updated_at": datetime.utcnow()},
-            "$setOnInsert": {"created_at": datetime.utcnow()},
+            "$set": {
+                "name": name,
+                "time": time_str,
+                "status": "present",
+                "updated_at": datetime.utcnow(),
+            },
+            "$setOnInsert": {
+                "created_at": datetime.utcnow(),
+                "date": date_str,
+                "subject": subject,
+                "enrollment": enrollment,
+            },
         },
         upsert=True
     )
