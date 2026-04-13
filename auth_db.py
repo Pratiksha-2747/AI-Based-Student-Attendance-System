@@ -55,7 +55,7 @@ def create_user(name, email, phone, password, profile_image_path, enrollment=Non
         "updated_at": datetime.utcnow(),
     }
     if enrollment is not None and str(enrollment).strip() != "":
-        doc["enrollment"] = int(enrollment)
+        doc["enrollment"] = enrollment
 
     users_col.insert_one(doc)
 
@@ -104,9 +104,9 @@ def login_user(email, password):
 def get_user_by_email(email):
     return users_col.find_one({"email": email.lower()})
 
-def get_attendance_summary(enrollment: int):
-    e_int = int(enrollment)
-    e_str = str(enrollment)
+def get_attendance_summary(enrollment: str):
+    e_int = enrollment
+    e_str = enrollment
 
     # fetch all attendance rows for this student (int or str enrollment)
     records = list(
@@ -151,16 +151,22 @@ def set_face_registered(email: str, value: bool = True):
     )
 
 students_col = db["students"]
+students_col.create_index([("enrollment", ASCENDING)], unique=True)
 
-def upsert_student(enrollment: int, name: str, email: str, phone: str):
+def upsert_student(enrollment: str, name: str, email: str, phone: str):
     students_col.update_one(
-        {"enrollment": int(enrollment)},
-        {"$set": {
-            "enrollment": int(enrollment),
-            "name": name.strip(),
-            "email": email.strip().lower(),
-            "phone": phone.strip(),
-            "updated_at": datetime.utcnow()
-        }},
+        {"enrollment": enrollment},
+        {
+            "$set": {
+                "enrollment": enrollment,
+                "name": name.strip(),
+                "email": email.strip().lower(),
+                "phone": phone.strip(),
+                "updated_at": datetime.utcnow()
+            },
+            "$setOnInsert": {
+                "created_at": datetime.utcnow()
+            }
+        },
         upsert=True
     )

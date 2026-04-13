@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from pymongo import MongoClient, ASCENDING
+from pymongo.errors import PyMongoError
 import certifi
 
 load_dotenv()
@@ -11,6 +12,18 @@ MONGO_DB = os.getenv("MONGO_DB", "attendance_system")
 
 print("DB:", MONGO_DB)
 print("URI startswith:", (MONGO_URI or "")[:25])
+
+DB_OK = False
+
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, tls=True)
+    client.admin.command("ping")
+    DB_OK = True
+    print("MongoDB connected")
+except Exception as e:
+    client = None
+    print("MongoDB not connected:", e)
+
 
 if not MONGO_URI:
     raise ValueError("MONGO_URI missing in .env")
@@ -42,7 +55,7 @@ attendance_col.create_index(
 users_col.create_index([("email", ASCENDING)], unique=True)
 
 
-def upsert_student(enrollment: int, name: str):
+def upsert_student(enrollment: str, name: str):
     students_col.update_one(
         {"enrollment": enrollment},
         {
@@ -53,7 +66,7 @@ def upsert_student(enrollment: int, name: str):
     )
 
 
-def save_photo_meta(enrollment: int, name: str, photo_path: str):
+def save_photo_meta(enrollment: str, name: str, photo_path: str):
     photos_col.insert_one({
         "enrollment": enrollment,
         "name": name,
@@ -62,11 +75,15 @@ def save_photo_meta(enrollment: int, name: str, photo_path: str):
     })
 
 
-def save_attendance(enrollment: int, name: str, subject: str, dt: datetime):
-    enrollment = int(enrollment)
+def save_attendance(enrollment: str, name: str, subject: str, dt: datetime):
+    enrollment = enrollment
     subject = subject.strip().upper()
     date_str = dt.strftime("%Y-%m-%d")
     time_str = dt.strftime("%H:%M:%S")
+
+    if not DB_OK:
+        print("DB skipped: not connected")
+        return
 
     attendance_col.update_one(
         {"enrollment": enrollment, "subject": subject, "date": date_str},

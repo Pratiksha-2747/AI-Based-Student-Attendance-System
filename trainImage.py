@@ -23,8 +23,10 @@ def TrainImage(haarcasecade_path, trainimage_path, trainimagelabel_path, message
 
     recognizer.save(trainimagelabel_path)
     res = "Image Trained Successfully"
-    message.configure(text=res)
-    text_to_speech(res)
+    if message is not None:
+        message.configure(text=res)
+    if text_to_speech is not None:
+        text_to_speech(res)
 
 
 def getImagesAndLables(path):
@@ -50,14 +52,12 @@ def getImagesAndLables(path):
                 pil_image = Image.open(image_path).convert("L")
                 image_np = np.array(pil_image, "uint8")
 
-                # Expected: <Name>_<Enrollment>_<Sample>.jpg
-                # Robust parse from right side
-                base_name = os.path.splitext(file_name)[0]
-                parts = base_name.rsplit("_", 2)
-                if len(parts) != 3:
+                # Folder format: <Name>_<Enrollment>
+                folder_parts = student_dir.rsplit("_", 1)
+                if len(folder_parts) != 2:
                     continue
 
-                enrollment_str = parts[1]
+                enrollment_str = folder_parts[1]
                 if not enrollment_str.isdigit():
                     continue
 

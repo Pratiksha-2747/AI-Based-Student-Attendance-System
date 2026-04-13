@@ -8,6 +8,7 @@ import cv2
 import os
 import time
 
+
 def TakeImageMultiAngle(enrollment, name, haarcascade_path, trainimage_path, message_label=None):
     enrollment = str(enrollment).strip()
     name = str(name).strip()
@@ -20,6 +21,11 @@ def TakeImageMultiAngle(enrollment, name, haarcascade_path, trainimage_path, mes
 
     detector = cv2.CascadeClassifier(haarcascade_path)
     cam = cv2.VideoCapture(0)
+    safe_name = "".join(c for c in name if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+
+    folder_name = f"{safe_name}_{enrollment}"
+    student_dir = os.path.join(trainimage_path, folder_name)
+    os.makedirs(student_dir, exist_ok=True)
 
     phases = [
         ("FRONT", 20),
@@ -63,8 +69,8 @@ def TakeImageMultiAngle(enrollment, name, haarcascade_path, trainimage_path, mes
             sample_num += 1
             phase_count += 1
 
-            file_name = f"{name}.{enrollment}.{sample_num}.jpg"
-            save_path = os.path.join(trainimage_path, file_name)
+            file_name = f"img_{sample_num:03d}.jpg"
+            save_path = os.path.join(student_dir, file_name)
             cv2.imwrite(save_path, face)
 
             cv2.rectangle(img, (x, y), (x+w, y+h), (0,255,0), 2)

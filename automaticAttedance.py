@@ -74,18 +74,13 @@ def subjectChoose(text_to_speech):
                             timeStamp = datetime.datetime.fromtimestamp(ts).strftime(
                                 "%H:%M:%S"
                             )
-                            aa = df.loc[df["Enrollment"] == Id]["Name"].values
-                            global tt
-                            tt = str(Id) + "-" + aa
-                            # En='1604501160'+str(Id)
-                            attendance.loc[len(attendance)] = [
-                                Id,
-                                aa,
-                            ]
-                            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 260, 0), 4)
-                            cv2.putText(
-                                im, str(tt), (x + h, y), font, 1, (255, 255, 0,), 4
-                            )
+                            name_series = df.loc[df["Enrollment"] == Id, "Name"]
+                            name = name_series.iloc[0] if not name_series.empty else "Unknown"
+
+                            tt = f"{name} ({Id})"
+                            attendance.loc[len(attendance)] = [Id, name]
+                            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 4)
+                            cv2.putText(im, tt, (x, y - 10), font, 0.9, (255, 255, 0), 2)
                         else:
                             Id = "Unknown"
                             tt = str(Id)
@@ -105,7 +100,6 @@ def subjectChoose(text_to_speech):
                         break
 
                 ts = time.time()
-                print(aa)
                 # attendance["date"] = date
                 # attendance["Attendance"] = "P"
                 attendance[date] = 1
@@ -212,8 +206,11 @@ def subjectChoose(text_to_speech):
                         r += 1
                 root.mainloop()
                 print(attendance)
-            except:
-                f = "No Face found for attendance"
+            except Exception as e:
+                print("[ATTENDANCE ERROR]", e)
+                import traceback
+                traceback.print_exc()
+                f = f"Attendance error: {e}"
                 text_to_speech(f)
                 cv2.destroyAllWindows()
 

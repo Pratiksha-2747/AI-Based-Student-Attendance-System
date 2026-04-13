@@ -6,6 +6,9 @@ from tkinter import filedialog, messagebox, ttk
 import takeImage
 import trainImage
 from auth_db import set_face_registered
+from auth_db import upsert_student
+from trainImage import TrainImage
+from takeImage import TakeImageMultiAngle
 
 from auth_db import (
     create_user,
@@ -23,7 +26,22 @@ face_capture_done = False
 otp_sent = False
 entry_placeholders = {}
 
-def upsert_student_csv(enrollment: int, name: str):
+import re
+
+def is_valid_enrollment(enrollment: str) -> bool:
+    enrollment = enrollment.strip().lower()
+    # u24cs128 style
+    return re.fullmatch(r"u\d{2}[a-z]{2,4}\d{3}", enrollment) is not None
+
+def is_valid_svnit_email_for_enrollment(email: str, enrollment: str) -> bool:
+    email = email.strip().lower()
+    enrollment = enrollment.strip().lower()
+    # local-part must be same as enrollment
+    pattern = rf"^{re.escape(enrollment)}@[a-z]+\.svnit\.ac\.in$"
+    return re.fullmatch(pattern, email) is not None
+
+
+def upsert_student_csv(enrollment: str, name: str):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     studentdetail_path = os.path.join(BASE_DIR, "StudentDetails", "studentdetails.csv")
     os.makedirs(os.path.dirname(studentdetail_path), exist_ok=True)
@@ -49,6 +67,8 @@ def upsert_student_csv(enrollment: int, name: str):
         writer.writeheader()
         writer.writerows(rows)
 
+    print(f"[students] upsert -> {enrollment}, {name}")
+
 def choose_image():
     global selected_image_path
     path = filedialog.askopenfilename(
@@ -68,8 +88,9 @@ def capture_face_now():
     if not name or not enrollment:
         messagebox.showerror("Error", "Enter Name and Enrollment first.")
         return
-    if not enrollment.isdigit():
-        messagebox.showerror("Error", "Enrollment must be numeric.")
+    
+    if not is_valid_enrollment(enrollment):
+        messagebox.showerror("Invalid Enrollment", "Enrollment must be like: u20cs000")
         return
 
     try:
@@ -77,9 +98,10 @@ def capture_face_now():
         haarcasecade_path = os.path.join(BASE_DIR, "haarcascade_frontalface_default.xml")
         trainimage_path = os.path.join(BASE_DIR, "TrainingImage")
         trainimagelabel_path = os.path.join(BASE_DIR, "TrainingImageLabel", "Trainner.yml")
+        haarcascade_path = os.path.join(BASE_DIR, "haarcascade_frontalface_default.xml")
 
         captured = takeImage.TakeImageMultiAngle(
-            enrollment=int(enrollment),
+            enrollment=enrollment,
             name=name,
             haarcascade_path=haarcasecade_path,
             trainimage_path=trainimage_path
@@ -113,25 +135,36 @@ def signup():
     phone = get_clean_entry_value(phone_entry)
     enrollment = get_clean_entry_value(enroll_entry)
     password = get_clean_entry_value(pass_entry)
+    enrollment = get_clean_entry_value(enroll_entry).strip().lower()
+    email = get_clean_entry_value(email_entry).strip().lower()
 
     if not all([name, email, phone, enrollment, password, selected_image_path]):
         messagebox.showerror("Error", "Please fill all fields and choose profile image.")
-        return
-
-    if not enrollment.isdigit():
-        messagebox.showerror("Error", "Enrollment must be numeric.")
         return
 
     # compulsory face capture check
     if not face_capture_done:
         messagebox.showerror("Error", "Face recognition is compulsory. Please click 'Face Recognition' first.")
         return
+    
+
+    if not is_valid_enrollment(enrollment):
+        messagebox.showerror("Invalid Enrollment", "Enrollment must be like: u24cs128")
+        return
+
+    if not is_valid_svnit_email_for_enrollment(email, enrollment):
+        messagebox.showerror(
+            "Invalid Email",
+            "Email must be like: u24cs128@coed.svnit.ac.in\n(Local part must match enrollment)"
+        )
+        return
 
     try:
         if not otp_sent:
             # first time signup create user
-            create_user(name, email, phone, password, selected_image_path, int(enrollment))
-            upsert_student_csv(int(enrollment), name)   # ✅ HERE
+            create_user(name, email, phone, password, selected_image_path, enrollment)
+            upsert_student_csv(enrollment, name)
+            upsert_student(enrollment, name, email, phone)
 
         otp = generate_otp()
         set_otp(email, otp)
@@ -199,7 +232,7 @@ def open_dashboard(email):
         messagebox.showerror("Error", "Enrollment not linked with this account")
         return
 
-    data = get_attendance_summary(int(enrollment))
+    data = get_attendance_summary(enrollment)
 
     dash = tk.Toplevel(root)
     dash.title("My Attendance Dashboard")
